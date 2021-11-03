@@ -4,8 +4,9 @@
 #
 # Maxence Caille <maxence.caille@emse.fr>
 # 2021-11-03
+#set -x
 
-function missingArgument() {
+function missingArgument() { #on indique ici la synthaxe à l'utilisateur pour utiliser notre programme
 	prog=$"palbum"
 
 	echo "You have to write two arguments."
@@ -13,12 +14,12 @@ function missingArgument() {
 	echo "$prog <INPUT-DIRECTORY> <OUTPUT-DIRECTORY>"
 }
 
-function error() {
+function error() {			#fonction pour notifier l'utilisateur d une erreur
 	echo "(Error)\"$2\": $1" >&2
 	exit 1
 }
 
-function checkInput(){
+function checkInput(){			#fonction qui permet de vérifier que l input directory contienne bien des images
 
 	pictures=$(find "$inputDir" -type f -name "*.jpg")
 	if [ -z "$pictures" ];
@@ -30,12 +31,12 @@ function checkInput(){
 	fi
 }
 
-function checkOutput() {
+function checkOutput() {		#fonction qui permet de gérer le cas où l output directory existe déjà
 	if [[ -d "$outputDir" ]];
 	then
 		echo "$outputDir already exists."
 		while true; do
-			read -p "Do you want to complete the current album? (y/n)" yn
+			read -p "Do you want to complete the current album? (y/n)" yn      #on demande à l utilisateur ce qu il souhaite faire 
     			case $yn in
        				[Yy]* ) break;;
         			[Nn]* ) exit 1;;
@@ -48,37 +49,42 @@ function checkOutput() {
 		mkdir "$outputDir"
 	fi
 }
-function organizePictures(){
-	find $inputDir -type f -name "*.jpg">listPictures
-	while read line
-	do
-		date=$(identify -verbose $line |grep date:modify|cut -b 18-27)
-		year=${date:0:4}
-		echo "date : $date  year: $year"
-		if [ ! -d "$outputDir/%year" ]
-		then
-			mkdir "$outputDir/$year"
-			mkdir "$outputDir/$year/$date"
-		fi
 
-		if [ ! -d "$outputDir/$year/$date" ]
-		then
-			mkdir "$outputDir/$year/$date"
+function organizePictures(){					#cette fonction permet de réaliser l'aborescence des fichiers ainsi que de copier l ensemble des photos dans le nouveau dossier 
+	find $inputDir -type f -name "*.jpg">listPictures	#les fichiers jpg (les photos) sont stockés dans le fichier listPictures qui sera supprimé à la fin du programme
+	while read line	do
+
+		identify -regard-warnings -verbose $line > /dev/null 2>&1  #on teste ici si l image n est pas corrompue 
+		resultTest=$?
+		if [ $resultTest -lt 1 ]				   # si l image n est pas corrompue le resultTest renvoie 0 (ce qui est inférieur à 1) et donc on peut le placer dans le nouveau dossier
+ 		then
+			date=$(identify -verbose $line |grep date:modify|cut -b 18-27)      #on formate ici la date de la photo pour pouvoir la placer/ou créer un dossier pour la ranger dedans
+			year=${date:0:4}
+			if [ ! -d "$outputDir/$year" ]						#si le dossier n existe pas, on l'ajoute
+			then
+				mkdir "$outputDir/$year"
+			fi
+
+			if [ ! -d "$outputDir/$year/$date" ]
+			then
+				mkdir "$outputDir/$year/$date"
+			fi
+			cp $line "$outputDir/$year/$date"				#on copie la photo dans le dosser adéquat
 		fi
-		cp line "$outputDir/$year/$date"
 	done<listPictures
-	rm listPictures
+	rm -f listPictures
 }
 
 
-if [ $# -lt 2 ];
+
+if [ $# -lt 2 ]; 		#on vérifie qu il y ait bien deux arguments qui sont rentrés par l utilisateur
 then
 	missingArgument
 	exit 1
 fi
 
 
-if [ ! -d "$1" ];
+if [ ! -d "$1" ];		#on vérifie que le directory rentré par l utilisateur en est bien un
 then
 	error "is not a directory" $1
 	exit 1
@@ -87,10 +93,10 @@ fi
 inputDir=$1
 outputDir=$2
 
-checkInput
+checkInput	#on vérifie les input
 checkOutput
 
-organizePictures
+organizePictures    #on crée l'arborescence, copie  les photos dans le nouveau directory
 
 
 
