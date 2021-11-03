@@ -52,7 +52,8 @@ function checkOutput() {		#fonction qui permet de gérer le cas où l output dir
 
 function organizePictures(){					#cette fonction permet de réaliser l'aborescence des fichiers ainsi que de copier l ensemble des photos dans le nouveau dossier 
 	find $inputDir -type f -name "*.jpg">listPictures	#les fichiers jpg (les photos) sont stockés dans le fichier listPictures qui sera supprimé à la fin du programme
-	while read line	do
+	while read line;
+		do
 
 		identify -regard-warnings -verbose $line > /dev/null 2>&1  #on teste ici si l image n est pas corrompue 
 		resultTest=$?
@@ -68,13 +69,22 @@ function organizePictures(){					#cette fonction permet de réaliser l'aborescen
 			if [ ! -d "$outputDir/$year/$date" ]
 			then
 				mkdir "$outputDir/$year/$date"
+				mkdir "$outputDir/$year/$date/.thumbs"			# je cree les directory selon la nomenvlature exigee
 			fi
 			cp $line "$outputDir/$year/$date"				#on copie la photo dans le dosser adéquat
+			createThumbnail $line $outputDir/$year/$date			#je cree mon thumbnail en appelant la fonction adequate
 		fi
 	done<listPictures
 	rm -f listPictures
 }
 
+function createThumbnail(){
+	picture=$1		#on récupère le nom de la picture
+	pictureName=$(echo "$picture" | cut -f 1 -d '.')
+	thumbnailName="${pictureName}-thumb.jpg"	#on ecrit le nom du thumbnail selon l exigence de l enonce
+	convert -define jpeg:size=500x180 $picture -thumbnail '150x150>' $thumbnailName    #je cree mon thumbnail, j utilise l option define pour ne ne pas faire déborder la mémoire de l ordinateur avec une image énorme quand elle n est pas nécessaire. Et j ajoute aussi l argument 150x60> pour respecter l enonce ( les 150 pixels de haut en gardant les proportions) 
+	mv $thumbnailName "$2/.thumbs"			#on deplace dans le bon repertoire (outputDir)
+}
 
 
 if [ $# -lt 2 ]; 		#on vérifie qu il y ait bien deux arguments qui sont rentrés par l utilisateur
