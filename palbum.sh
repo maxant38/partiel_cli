@@ -142,6 +142,11 @@ function createYearIndex(){
 			echo "<h2>"$month"</h2>" >> $indexPath                         # on ajoute le mois pour mieux organiser l index
 		fi
 		echo "<p>$day" >> $indexPath                                           # j'ajoute les differents jours à l index
+		for picture in $3/$day/*
+		do
+			imageName=$(echo "$picture" | cut -d '/' -f 4 | cut -d '.' -f 1)									#on recupere le nom de l image
+			echo "<a href=\"$3/$day/$imageName.jpg\"><img src=\"$3/$day/.thumbs/$(ls -a $3/$day/.thumbs | grep $imageName) \"/></a>" >> $indexPath	#affiche les vignettes sous forme de lien image afin d eviter des temps de chargement trop longs
+		done
 	done
 	echo "</p>" >> $indexPath
 	rm -f days.txt
