@@ -102,17 +102,15 @@ function createGlobalIndex(){
 		if [ -d $yearPath ]
 		then
 			year=$(echo "$yearPath" | rev | cut -b 1-4 | rev)
-			echo "$year"
 			echo "<h2>">>$1/index.html
 			echo "$year">>$1/index.html
 			echo "</h2>">>$1/index.html
 			echo "number of pictures taken this year:">>$1/index.html
 			echo "<strong>">>$1/index.html
-			echo "$(find $yearPath/ -type f | wc -l)"
 			echo "$(find $yearPath/ -type f | wc -l)">>$1/index.html
 			echo "</strong>">>$1/index.html
+			createYearIndex $1 $year $yearPath
 		fi
-	#createYearIndex $1 $year $yearPath
 	done
 	echo "</p>
 	</body>
@@ -121,32 +119,23 @@ function createGlobalIndex(){
 
 
 function createYearIndex(){
-	indexPath="$3/index.html"
-	touch $indexPath
+	echo "year index start"
+	indexPath="$3/index.html"  # $1 est le outputDir / $2 est juste l annee en format YYYY / $3 est outputDir/YYYY
+	touch $indexPath           # de la forme outputDir/YYYY/index.html
 	echo "<!DOCTYPE html>
 	<html>
 	<head>
 	<title>Album Photo per year</title>
 	</head>
 	<body>
-	<h1>$2</h1>">>$indexPath
-
-	ls -1 $3 | sort -t- +1nr | grep - >days.txt
-	while read day;
+	<h1>$2</h1>" >> $indexPath
+	find "$3" -maxdepth 1 -type d | sort -t | tail -n+2 | rev | cut -b 1-10 | rev > days.txt # je recupere l'ensemble des jours et je les trie par date
+	for day in $(cat days.txt);
 	do
-		month=${day:0:7}
-		echo"<h2>$month</h2>
-	<h3>$day</h3>
-	<p>">>$indexPath
-
-	for image in $3/$day/*
-	do
-		image_basename=$(echo "$image" | cut -d '/' -f 4 | cut -d '.' -f 1)
-		echo "<a> href=\"$image\"><img src=\"$2/$day/.thumbs/$(ls  $2/$day/.thumbs | grep $image_basename) \" ">>$indexPath
+		echo "<p>$day" >> $indexPath                                           # j'ajoute les differents jours à l index
 	done
-	echo "</p>">>$indexPath
-	done<days.txt
-	rm days.txt
+	echo "</p>" >> $indexPath
+	rm -f days.txt
 }
 
 
