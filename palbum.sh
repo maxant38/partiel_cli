@@ -50,7 +50,8 @@ function checkOutput() {		#fonction qui permet de gérer le cas où l output dir
 	fi
 }
 
-function organizePictures(){					#cette fonction permet de réaliser l'aborescence des fichiers ainsi que de copier l ensemble des photos dans le nouveau dossier 
+function organizePictures(){					#cette fonction permet de réaliser l'aborescence des fichiers ainsi que de copier l ensemble des photos dans le nouveau dossier
+	echo "Start creating the new diretory" 
 	find $inputDir -type f -name "*.jpg">listPictures	#les fichiers jpg (les photos) sont stockés dans le fichier listPictures qui sera supprimé à la fin du programme
 	while read line;
 		do
@@ -87,6 +88,7 @@ function createThumbnail(){
 }
 
 function createGlobalIndex(){
+	echo "Start creating index"
 	touch $1/index.html
 	echo "<!DOCTYPE html>
 	<html>
@@ -103,11 +105,11 @@ function createGlobalIndex(){
 		then
 			year=$(echo "$yearPath" | rev | cut -b 1-4 | rev)
 			echo "<h2>">>$1/index.html
-			echo "$year">>$1/index.html
+			echo "<a href=\"$year/index.html\">$year</link></a>">> $1/index.html   #on redirige vers le index.html lie a l annee en question
 			echo "</h2>">>$1/index.html
 			echo "number of pictures taken this year:">>$1/index.html
 			echo "<strong>">>$1/index.html
-			echo "$(find $yearPath/ -type f | wc -l)">>$1/index.html
+			echo "$(find $yearPath/ -type f | wc -l)">>$1/index.html               #on calcule le nombre de photos prises cette annee la
 			echo "</strong>">>$1/index.html
 			createYearIndex $1 $year $yearPath
 		fi
@@ -129,9 +131,16 @@ function createYearIndex(){
 	</head>
 	<body>
 	<h1>$2</h1>" >> $indexPath
-	find "$3" -maxdepth 1 -type d | sort -t | tail -n+2 | rev | cut -b 1-10 | rev > days.txt # je recupere l'ensemble des jours et je les trie par date
+	lastMonth="0"
+	find "$3" -maxdepth 1 -type d | tail -n+2 | rev | cut -b 1-10 | rev | sort -t- +1nr > days.txt # je recupere l'ensemble des jours et je les trie par date 
 	for day in $(cat days.txt);
 	do
+		month=${day:0:7}
+		if [[ "$month" != "$lastMonth" ]]					#on verifie qu il s agit d un nouveau mois pour ne pas faire de doublon
+		then
+			lastMonth=$month
+			echo "<h2>"$month"</h2>" >> $indexPath                         # on ajoute le mois pour mieux organiser l index
+		fi
 		echo "<p>$day" >> $indexPath                                           # j'ajoute les differents jours à l index
 	done
 	echo "</p>" >> $indexPath
@@ -157,6 +166,7 @@ outputDir=$2
 
 checkInput	#on vérifie les input
 checkOutput
+echo "No problem have been detected, start the program."
 
 organizePictures    #on crée l'arborescence, copie  les photos dans le nouveau directory
 
