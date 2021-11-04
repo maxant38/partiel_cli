@@ -86,6 +86,69 @@ function createThumbnail(){
 	mv $thumbnailName "$2/.thumbs"			#on deplace dans le bon repertoire (outputDir)
 }
 
+function createGlobalIndex(){
+	touch $1/index.html
+	echo "<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Album Photo </title>
+	</head>
+	<body>
+	<h1>Global Index</h1>
+	<p>" >>$1/index.html
+
+	for yearPath in $1/*;
+	do
+		if [ -d $yearPath ]
+		then
+			year=$(echo "$yearPath" | rev | cut -b 1-4 | rev)
+			echo "$year"
+			echo "<h2>">>$1/index.html
+			echo "$year">>$1/index.html
+			echo "</h2>">>$1/index.html
+			echo "number of pictures taken this year:">>$1/index.html
+			echo "<strong>">>$1/index.html
+			echo "$(find $yearPath/ -type f | wc -l)"
+			echo "$(find $yearPath/ -type f | wc -l)">>$1/index.html
+			echo "</strong>">>$1/index.html
+		fi
+	#createYearIndex $1 $year $yearPath
+	done
+	echo "</p>
+	</body>
+	</html>">>$1/index.html
+}
+
+
+function createYearIndex(){
+	indexPath="$3/index.html"
+	touch $indexPath
+	echo "<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Album Photo per year</title>
+	</head>
+	<body>
+	<h1>$2</h1>">>$indexPath
+
+	ls -1 $3 | sort -t- +1nr | grep - >days.txt
+	while read day;
+	do
+		month=${day:0:7}
+		echo"<h2>$month</h2>
+	<h3>$day</h3>
+	<p>">>$indexPath
+
+	for image in $3/$day/*
+	do
+		image_basename=$(echo "$image" | cut -d '/' -f 4 | cut -d '.' -f 1)
+		echo "<a> href=\"$image\"><img src=\"$2/$day/.thumbs/$(ls  $2/$day/.thumbs | grep $image_basename) \" ">>$indexPath
+	done
+	echo "</p>">>$indexPath
+	done<days.txt
+	rm days.txt
+}
+
 
 if [ $# -lt 2 ]; 		#on vérifie qu il y ait bien deux arguments qui sont rentrés par l utilisateur
 then
@@ -108,10 +171,9 @@ checkOutput
 
 organizePictures    #on crée l'arborescence, copie  les photos dans le nouveau directory
 
-
+createGlobalIndex $outputDir
 
 
 echo "end"
-
 
 
